@@ -29,7 +29,7 @@ import {
   EachAngleUnit,
   RandomChoiceUnit,
   RandomRangeUnit,
-  RandomAngleUnit, CharacterUnit,
+  RandomAngleUnit, CharacterUnit, BloomVoiceUnit, CrackleVoiceUnit,
 } from './dsl-compiler';
 import * as dsl from './dsl';
 
@@ -62,6 +62,8 @@ export function initializeUnits(): void {
   units.set('text', new UnitConstructor(TextUnit));
   units.set('textExplode', new UnitConstructor(TextExplodeUnit));
   units.set('character', new UnitConstructor(CharacterUnit));
+  units.set('bloomVoice', new UnitConstructor(BloomVoiceUnit));
+  units.set('crackleVoice', new UnitConstructor(CrackleVoiceUnit));
   units.set(dsl.Symbol.block.value, new UnitConstructor(BlockUnit));
 
   units.set(dsl.Symbol.eachChoice.value, new UnitConstructor(EachChoiceUnit));

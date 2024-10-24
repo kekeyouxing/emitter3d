@@ -390,6 +390,26 @@ export class TextUnit extends ConstructedUnit {
   }
 }
 
+export class BloomVoiceUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    const args = this.takeArgs(env, 1);
+    const childPattern = args.behavior();
+    return index => {
+      return new behavior.BloomVoiceBehavior(childPattern([0, 1]));
+    };
+  }
+}
+
+export class CrackleVoiceUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    const args = this.takeArgs(env, 1);
+    const childPattern = args.behavior();
+    return index => {
+      return new behavior.CrackleVoiceBehavior(childPattern([0, 1]));
+    };
+  }
+}
+
 export class BlockUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const behaviorGens = this.args.map(arg => {

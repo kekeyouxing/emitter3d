@@ -1,6 +1,9 @@
 import { Particle, Behavior, Field } from './particle';
-import { textPositions, center } from './text';
+import { generateTextPositions } from './text';
 import * as math from 'gl-matrix';
+import { SoundHandler } from './soundhandler';
+
+const soundHandler = new SoundHandler();
 
 export class NopBehavior extends Behavior {
 }
@@ -93,9 +96,6 @@ export class TextExplodeBehavior extends Behavior {
   }
 
   update(field: Field, particle: Particle, start: number, end: number): number {
-    // const endR = this.easing.at(end, this.lifespan);
-    // const deltaR = this.easing.delta(start, end, this.lifespan);
-    // particle.textExplode(endR, deltaR);
     particle.explode();
     return super.update(field, particle, start, end);
   }
@@ -152,7 +152,7 @@ export class characterBehavior extends Behavior {
   }
 
   update(field: Field, particle: Particle, start: number, end: number): number {
-    // const { textPositions, center } = generateTextPositions(this.s);
+    const { textPositions, center } = generateTextPositions(this.s);
     const targetCenter = particle.position;
     const translation = math.vec3.create();
     math.vec3.subtract(translation, targetCenter, center);
@@ -181,9 +181,11 @@ export class TextBehavior extends Behavior {
   }
 
   update(field: Field, particle: Particle, start: number, end: number): number {
-    // const { textPositions, center } = generateTextPositions('I LOVE YOU');
+    const { textPositions, center } = generateTextPositions('I LOVE YOU');
     const targetCenter = particle.position;
     const translation = math.vec3.create();
+    // offset to the center
+    const offset = math.vec3.fromValues(this.x, this.y, this.z);
     math.vec3.subtract(translation, targetCenter, center);
     for (let i = 0; i < textPositions.length; i++) {
       let vy = 1 - Math.random() * 2;
@@ -193,9 +195,34 @@ export class TextBehavior extends Behavior {
       let newPosition = math.vec3.clone(textPositions[i]);
       // 偏移到中心点
       math.vec3.add(newPosition, newPosition, translation);
+      // 偏移到指定位置
+      math.vec3.add(newPosition, newPosition, offset);
       newParticle.setProperties(newPosition, particle.rotation, particle.speed, particle.hue, vx, vy, vz, -0.2, 0.01);
       field.add(newParticle);
     }
+    return super.update(field, particle, start, end);
+  }
+}
+
+export class BloomVoiceBehavior extends Behavior {
+  constructor(readonly behavior: Behavior) {
+    super();
+  }
+
+  update(field: Field, particle: Particle, start: number, end: number): number {
+    soundHandler.PlayBoom(0.1);
+    return super.update(field, particle, start, end);
+  }
+}
+
+// CrackleVoiceBehavior
+export class CrackleVoiceBehavior extends Behavior {
+  constructor(readonly behavior: Behavior) {
+    super();
+  }
+
+  update(field: Field, particle: Particle, start: number, end: number): number {
+    soundHandler.PlayCrackle(0.1);
     return super.update(field, particle, start, end);
   }
 }
