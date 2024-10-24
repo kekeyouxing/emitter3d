@@ -17,7 +17,7 @@ export class Camera extends THREE.PerspectiveCamera {
     aspect: number,
     near: number,
     far: number,
-    initialPosition: CameraPosition
+    initialPosition: CameraPosition,
   ) {
     super(fov, aspect, near, far);
     this.targetPosition = { ...initialPosition };
@@ -48,7 +48,8 @@ export class Camera extends THREE.PerspectiveCamera {
     this.position.set(
       this.currentPosition.d * Math.sin(phi) * Math.cos(theta),
       this.currentPosition.d * Math.cos(phi) + this.currentPosition.o,
-      this.currentPosition.d * Math.sin(phi) * Math.sin(theta)
+      this.currentPosition.d * Math.sin(phi) * Math.sin(theta),
+      //175, 130, 0,
     );
     this.lookAt(new THREE.Vector3(0, this.currentPosition.o, 0));
   }
@@ -63,7 +64,8 @@ export class CameraController {
     return this._isDragging;
   }
 
-  constructor(private _camera: Camera) {}
+  constructor(private _camera: Camera) {
+  }
 
   bind(container: HTMLElement): void {
     container.addEventListener('mousedown', this.onMouseDown, false);

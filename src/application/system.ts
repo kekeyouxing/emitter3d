@@ -27,7 +27,7 @@ function useExplorerInitialization(): void {
         storages.map(async storage => {
           const items = await explorer.items(storage.path);
           return { ...storage, items };
-        })
+        }),
       );
       update({ explorer: state });
     })();
@@ -48,7 +48,7 @@ function useCompileRequestHandler(): void {
       const { message } = simulator.compilePattern(code, true);
       update({ editorNotification: message });
     },
-    [update, simulator]
+    [update, simulator],
   );
 
   useEffect(() => {
@@ -90,7 +90,7 @@ function useViewerOptionApplier(): void {
   const { showGrid } = store.state;
 
   useEffect(() => {
-    viewer.scene.grid.visible = showGrid;
+    // viewer.scene.grid.visible = showGrid;
   }, [showGrid]);
 
   const {
@@ -106,7 +106,6 @@ function useViewerOptionApplier(): void {
   } = store.state;
 
   useEffect(() => {
-    viewer.scene.prisms.visible = prism;
     viewer.scene.prismOptions.saturation = prismSaturation;
     viewer.scene.prismOptions.lightness = prismLightness;
     viewer.scene.prismOptions.snapshotOffset = prismSnapshotOffset;
@@ -166,7 +165,7 @@ function useViewerOptionApplier(): void {
       particleCoreRadius,
       particleCoreSharpness,
       particleShellRadius,
-      particleShellLightness
+      particleShellLightness,
     );
     viewer.scene.particleOptions.snapshotOffset = particleSnapshotOffset;
     viewer.scene.particleOptions.hueOffset = particleHueOffset;
@@ -175,10 +174,10 @@ function useViewerOptionApplier(): void {
     viewer.scene.particleOptions.trailAttenuation = compileTransition(particleTrailAttenuation);
     viewer.scene.particleOptions.trailDiffusionScale = particleTrailDiffusionScale;
     viewer.scene.particleOptions.trailDiffusionTransition = compileTransition(
-      particleTrailDiffusionTransition
+      particleTrailDiffusionTransition,
     );
     viewer.scene.particleOptions.trailDiffusionShakiness = Math.exp(
-      particleTrailDiffusionShakiness - 5
+      particleTrailDiffusionShakiness - 5,
     );
     viewer.scene.stateNeedsUpdate = true;
   }, [
@@ -227,7 +226,7 @@ function useSystemUpdater(): (deltaTime: number) => void {
   return useCallback(
     (deltaTime: number) => {
       stats.begin();
-      if (cameraRevolve) viewer.camera.targetPosition.x += 0.05;
+      // if (cameraRevolve) viewer.camera.targetPosition.x += 0.05;
       if (!isPaused) {
         totalSteps.current += deltaTime * stepsPerSecond;
         while (totalSteps.current > stepsPerUpdate) {
@@ -238,12 +237,6 @@ function useSystemUpdater(): (deltaTime: number) => void {
         viewer.scene.stateNeedsUpdate = true;
 
         if (simulator.closed) {
-          if (floorTransition) {
-            floorOffset.current -= 100;
-            viewer.camera.targetPosition.x += Math.random() * 240 - 120;
-            viewer.camera.targetPosition.o = floorOffset.current;
-            viewer.scene.setYOffset(floorOffset.current);
-          }
           if (generateAutomatically) codeGenerate();
           simulator.emitRootParticle(0, floorOffset.current, 0);
         }
@@ -262,7 +255,7 @@ function useSystemUpdater(): (deltaTime: number) => void {
       cameraRevolve,
       floorTransition,
       generateAutomatically,
-    ]
+    ],
   );
 }
 
@@ -281,7 +274,7 @@ export function useCodeSave(): () => void {
     update(state => ({
       ...state,
       explorer: state.explorer.map(storage =>
-        storage.path == firstWritableStorage.path ? { ...storage, items } : storage
+        storage.path == firstWritableStorage.path ? { ...storage, items } : storage,
       ),
     }));
   }, [update, editingItem, editingCode, explorer]);
@@ -301,11 +294,11 @@ export function useCodeDelete(): (path: string, item: string) => void {
         explorer: state.explorer.map(storage =>
           storage.path == path
             ? { ...storage, items: storage.items.filter(i => i != item) }
-            : storage
+            : storage,
         ),
       }));
     },
-    [update, explorer]
+    [update, explorer],
   );
 }
 
@@ -325,7 +318,7 @@ export function useCodeLoad(): (path: string, item: string) => void {
         generateAutomatically: false,
       });
     },
-    [update, explorer]
+    [update, explorer],
   );
 }
 
@@ -347,7 +340,7 @@ export function useCodeGenerate(clear: boolean): () => void {
       editingCode: code,
       editorCompilation: ['cancelRequired'],
       explorer: state.explorer.map(storage =>
-        storage.path == 'history' ? { ...storage, items: storage.items.concat([item]) } : storage
+        storage.path == 'history' ? { ...storage, items: storage.items.concat([item]) } : storage,
       ),
       generatorGeneration: generation,
     }));

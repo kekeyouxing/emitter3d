@@ -2,6 +2,7 @@ import { Easing } from './aux/easing';
 import { Behavior } from './particle';
 import * as behavior from './particle-behavior';
 import * as dsl from './dsl';
+import { units, initializeUnits } from './units';
 
 export class CompileError extends Error {
   constructor(message: string) {
@@ -12,10 +13,9 @@ export class CompileError extends Error {
 export type Gen<T> = (index: [number, number]) => T;
 
 export class Compiler {
-  readonly units = new Map<string, Unit>();
 
   constructor() {
-    this.initializeUnits();
+    initializeUnits();
   }
 
   compileProgram(program: dsl.AST[]): Gen<Behavior> {
@@ -31,9 +31,10 @@ export class Compiler {
     return expr.visit({
       number: v => new NumberUnit(v.value),
       symbol: v => {
-        const unit = this.units.get(v.value);
+        const unit = units.get(v.value);
         if (!unit) {
-          throw new CompileError(`Unknown identifier "${v.value}"`);
+          // throw new CompileError(`Unknown identifier "${v.value}"`);
+          return new StringUnit(v.value);
         }
         return unit;
       },
@@ -42,37 +43,6 @@ export class Compiler {
         return this.getUnit(v.elements[0]).withArguments(v.elements.slice(1));
       },
     });
-  }
-
-  private initializeUnits(): void {
-    this.units.set('linear', new EasingUnit(Easing.linear));
-    this.units.set('ease-in', new EasingUnit(Easing.easeIn));
-    this.units.set('ease-out', new EasingUnit(Easing.easeOut));
-    this.units.set('ease-in-out', new EasingUnit(Easing.easeInOut));
-
-    this.units.set('nop', new NopUnit());
-    this.units.set('close', new CloseUnit());
-    this.units.set('speed', new UnitConstructor(SetSpeedUnit));
-    this.units.set('speed+', new UnitConstructor(AddSpeedUnit));
-    this.units.set('speed*', new UnitConstructor(MultiplySpeedUnit));
-    this.units.set('opacity', new UnitConstructor(SetOpacityUnit));
-    this.units.set('opacity+', new UnitConstructor(AddOpacityUnit));
-    this.units.set('opacity*', new UnitConstructor(MultiplyOpacityUnit));
-    this.units.set('hue', new UnitConstructor(SetHueUnit));
-    this.units.set('hue+', new UnitConstructor(AddHueUnit));
-    this.units.set('translate', new UnitConstructor(TranslateUnit));
-    this.units.set('rotate', new UnitConstructor(RotateUnit));
-    this.units.set('emit', new UnitConstructor(EmitUnit));
-    this.units.set('loop', new UnitConstructor(LoopUnit));
-    this.units.set('repeat', new UnitConstructor(RepeatUnit));
-    this.units.set(dsl.Symbol.block.value, new UnitConstructor(BlockUnit));
-
-    this.units.set(dsl.Symbol.eachChoice.value, new UnitConstructor(EachChoiceUnit));
-    this.units.set(dsl.Symbol.eachRange.value, new UnitConstructor(EachRangeUnit));
-    this.units.set(dsl.Symbol.eachAngle.value, new EachAngleUnit());
-    this.units.set(dsl.Symbol.randomChoice.value, new UnitConstructor(RandomChoiceUnit));
-    this.units.set(dsl.Symbol.randomRange.value, new UnitConstructor(RandomRangeUnit));
-    this.units.set(dsl.Symbol.randomAngle.value, new RandomAngleUnit());
   }
 }
 
@@ -92,10 +62,14 @@ export abstract class Unit {
   behavior(env: Compiler): Gen<Behavior> {
     throw new CompileError(`Expected behavior but got ${this.constructor.name}`);
   }
+
+  string(env: Compiler): Gen<string> {
+    throw new CompileError(`Expected string but got ${this.constructor.name}`);
+  }
 }
 
-class UnitConstructor extends Unit {
-  constructor(private c: { new (args: dsl.AST[]): Unit }) {
+export class UnitConstructor extends Unit {
+  constructor(private c: { new(args: dsl.AST[]): Unit }) {
     super();
   }
 
@@ -108,6 +82,7 @@ type TakeArgs = {
   number(): Gen<number>;
   easing(): Gen<Easing>;
   behavior(): Gen<Behavior>;
+  string(): Gen<string>;
 };
 
 abstract class ConstructedUnit extends Unit {
@@ -118,7 +93,7 @@ abstract class ConstructedUnit extends Unit {
   protected takeArgs(env: Compiler, length: number): TakeArgs {
     if (this.args.length != length) {
       throw new CompileError(
-        `${this.constructor.name} takes ${length} arguments but got ${this.args.length}`
+        `${this.constructor.name} takes ${length} arguments but got ${this.args.length}`,
       );
     }
     let i = 0;
@@ -126,11 +101,13 @@ abstract class ConstructedUnit extends Unit {
       easing: () => env.getUnit(this.args[i++]).easing(env),
       number: () => env.getUnit(this.args[i++]).number(env),
       behavior: () => env.getUnit(this.args[i++]).behavior(env),
+      string: () => env.getUnit(this.args[i++]).string(env),
     };
   }
 }
 
-class NilUnit extends Unit {}
+class NilUnit extends Unit {
+}
 
 class NumberUnit extends Unit {
   constructor(private value: number) {
@@ -147,7 +124,22 @@ class NumberUnit extends Unit {
   }
 }
 
-class EasingUnit extends Unit {
+class StringUnit extends Unit {
+  constructor(private value: string) {
+    super();
+  }
+
+  withArguments(args: dsl.AST[]): Unit {
+    return new PutLifespanUnit(this, args);
+  }
+
+  string(env: Compiler): Gen<string> {
+    const value = this.value;
+    return _ => value;
+  }
+}
+
+export class EasingUnit extends Unit {
   constructor(private value: Easing) {
     super();
   }
@@ -198,90 +190,90 @@ class PutEasingUnit extends ConstructedUnit {
   }
 }
 
-class NopUnit extends Unit {
+export class NopUnit extends Unit {
   behavior(env: Compiler): Gen<Behavior> {
     return _ => new behavior.NopBehavior();
   }
 }
 
-class CloseUnit extends Unit {
+export class CloseUnit extends Unit {
   behavior(env: Compiler): Gen<Behavior> {
     return _ => new behavior.SwitchBehavior(p => (p.closed = true));
   }
 }
 
-class SetSpeedUnit extends ConstructedUnit {
+export class SetSpeedUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const speedGen = this.takeArgs(env, 1).number();
     return index =>
       new behavior.SetBehavior(
         speedGen(index),
         p => p.speed,
-        (p, v) => (p.speed = v)
+        (p, v) => (p.speed = v),
       );
   }
 }
 
-class AddSpeedUnit extends ConstructedUnit {
+export class AddSpeedUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const speedGen = this.takeArgs(env, 1).number();
     return index => new behavior.AddBehavior(speedGen(index), (p, v) => (p.speed += v));
   }
 }
 
-class MultiplySpeedUnit extends ConstructedUnit {
+export class MultiplySpeedUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const speedGen = this.takeArgs(env, 1).number();
     return index => new behavior.MultiplyBehavior(speedGen(index), (p, s) => (p.speed *= s));
   }
 }
 
-class SetOpacityUnit extends ConstructedUnit {
+export class SetOpacityUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const opacityGen = this.takeArgs(env, 1).number();
     return index =>
       new behavior.SetBehavior(
         opacityGen(index),
         p => p.opacity,
-        (p, v) => (p.opacity = v)
+        (p, v) => (p.opacity = v),
       );
   }
 }
 
-class AddOpacityUnit extends ConstructedUnit {
+export class AddOpacityUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const opacityGen = this.takeArgs(env, 1).number();
     return index => new behavior.AddBehavior(opacityGen(index), (p, v) => (p.opacity += v));
   }
 }
 
-class MultiplyOpacityUnit extends ConstructedUnit {
+export class MultiplyOpacityUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const opacityGen = this.takeArgs(env, 1).number();
     return index => new behavior.MultiplyBehavior(opacityGen(index), (p, s) => (p.opacity *= s));
   }
 }
 
-class SetHueUnit extends ConstructedUnit {
+export class SetHueUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const hueGen = this.takeArgs(env, 1).number();
     return index =>
       new behavior.SetBehavior(
         hueGen(index),
         p => p.hue,
-        (p, v) => (p.hue = v)
+        (p, v) => (p.hue = v),
       );
   }
 }
 
-class AddHueUnit extends ConstructedUnit {
+export class AddHueUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const hueGen = this.takeArgs(env, 1).number();
     return index => new behavior.AddBehavior(hueGen(index), (p, v) => (p.hue += v));
   }
 }
 
-class TranslateUnit extends ConstructedUnit {
+export class TranslateUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const args = this.takeArgs(env, 3);
     const xGen = args.number();
@@ -291,7 +283,19 @@ class TranslateUnit extends ConstructedUnit {
   }
 }
 
-class RotateUnit extends ConstructedUnit {
+export class TextExplodeUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    return index => new behavior.TextExplodeBehavior();
+  }
+}
+
+export class FireworksExplodeUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    return index => new behavior.FireworksExplodeBehavior();
+  }
+}
+
+export class RotateUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const args = this.takeArgs(env, 3);
     const xdegGen = args.number();
@@ -301,14 +305,14 @@ class RotateUnit extends ConstructedUnit {
   }
 }
 
-class LoopUnit extends ConstructedUnit {
+export class LoopUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const patternGen = this.takeArgs(env, 1).behavior();
     return index => new behavior.LoopBehavior(patternGen(index));
   }
 }
 
-class RepeatUnit extends ConstructedUnit {
+export class RepeatUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const args = this.takeArgs(env, 2);
     const limitGen = args.number();
@@ -317,7 +321,7 @@ class RepeatUnit extends ConstructedUnit {
   }
 }
 
-class EmitUnit extends ConstructedUnit {
+export class EmitUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const args = this.takeArgs(env, 4);
     const countGen = args.number();
@@ -334,7 +338,59 @@ class EmitUnit extends ConstructedUnit {
   }
 }
 
-class BlockUnit extends ConstructedUnit {
+export class FlairUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    const args = this.takeArgs(env, 2);
+    const countGen = args.number();
+    const childPattern = args.behavior();
+    return index => {
+      const count = countGen(index);
+      return new behavior.FlairBehavior(count, childPattern([0, 1]));
+    };
+  }
+}
+
+export class FireworksUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    const args = this.takeArgs(env, 2);
+    const countGen = args.number();
+    const childPattern = args.behavior();
+    return index => {
+      const count = countGen(index);
+      return new behavior.FireworksBehavior(count, childPattern([0, 1]));
+    };
+  }
+}
+
+export class CharacterUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    const args = this.takeArgs(env, 2);
+    const stringGen = args.string();
+    const childPattern = args.behavior();
+    return index => {
+      const s = stringGen(index);
+      return new behavior.characterBehavior(s, childPattern([0, 1]));
+    };
+  }
+}
+
+export class TextUnit extends ConstructedUnit {
+  behavior(env: Compiler): Gen<Behavior> {
+    const args = this.takeArgs(env, 4);
+    const xGen = args.number();
+    const yGen = args.number();
+    const zGen = args.number();
+    const childPattern = args.behavior();
+    return index => {
+      const x = xGen(index);
+      const y = yGen(index);
+      const z = zGen(index);
+      return new behavior.TextBehavior(x, y, z, childPattern([0, 1]));
+    };
+  }
+}
+
+export class BlockUnit extends ConstructedUnit {
   behavior(env: Compiler): Gen<Behavior> {
     const behaviorGens = this.args.map(arg => {
       if (!(arg instanceof dsl.List)) {
@@ -346,7 +402,7 @@ class BlockUnit extends ConstructedUnit {
 
     return index => {
       const behaviors = behaviorGens.map(
-        gens => new behavior.SequentialBehavior(gens.map(gen => gen(index)))
+        gens => new behavior.SequentialBehavior(gens.map(gen => gen(index))),
       );
       return new behavior.ParallelBehavior(behaviors);
     };
@@ -422,37 +478,37 @@ abstract class RangeUnit extends ConstructedUnit {
   }
 }
 
-class EachChoiceUnit extends ChoiceUnit {
+export class EachChoiceUnit extends ChoiceUnit {
   choiceGen(size: number): Gen<number> {
     return ([a, _]) => a % size;
   }
 }
 
-class EachRangeUnit extends RangeUnit {
+export class EachRangeUnit extends RangeUnit {
   rangeGen(): Gen<number> {
     return ([a, b]) => (b <= 1 ? 0.5 : a / (b - 1));
   }
 }
 
-class EachAngleUnit extends Unit {
+export class EachAngleUnit extends Unit {
   number(env: Compiler): Gen<number> {
     return ([a, b]) => (360 * a) / b + (b == 2 ? 90 : 0);
   }
 }
 
-class RandomChoiceUnit extends ChoiceUnit {
+export class RandomChoiceUnit extends ChoiceUnit {
   choiceGen(size: number): Gen<number> {
     return _ => Math.floor(Math.random() * size);
   }
 }
 
-class RandomRangeUnit extends RangeUnit {
+export class RandomRangeUnit extends RangeUnit {
   rangeGen(): Gen<number> {
     return _ => Math.random();
   }
 }
 
-class RandomAngleUnit extends Unit {
+export class RandomAngleUnit extends Unit {
   number(env: Compiler): Gen<number> {
     return _ => Math.random() * 360;
   }

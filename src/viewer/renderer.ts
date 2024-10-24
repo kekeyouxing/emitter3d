@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Camera, Scene } from 'three';
 
 export class Renderer {
   private webGL: THREE.WebGLRenderer;
@@ -62,7 +63,7 @@ export class Renderer {
     this.composer.setSize(width, height);
   }
 
-  render(): void {
-    this.composer.render();
+  render(scene: Scene, camera: Camera): void {
+    this.webGL.render(scene, camera);
   }
 }

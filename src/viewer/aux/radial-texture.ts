@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-// TODO: Avoid banding
 export class RadialTexture {
   readonly canvas: HTMLCanvasElement;
   readonly context: CanvasRenderingContext2D;

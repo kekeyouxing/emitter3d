@@ -4,6 +4,7 @@ import * as dslPrinter from './dsl-printer';
 import * as dslCompiler from './dsl-compiler';
 
 import { Particle, Behavior, Field } from './particle';
+
 export { Particle, Behavior, Field };
 import * as patternGenerator from './pattern-generator';
 
@@ -77,6 +78,7 @@ export class Simulator {
   compilePattern(program: string | Program, clear: boolean): { success: boolean; message: string } {
     try {
       program = typeof program == 'string' ? parse(program) : program;
+      // 遍历program，并进行打印
       this.pattern = compile(program);
       if (clear) this.field.clear();
       return { success: true, message: 'Successfully compiled.' };
@@ -85,10 +87,10 @@ export class Simulator {
         e instanceof ParseError
           ? `Parse error: ${e.message}`
           : e instanceof CompileError
-          ? `Compile error: ${e.message}`
-          : e instanceof Error
-          ? `Unknown error: ${e.message}`
-          : '${e}';
+            ? `Compile error: ${e.message}`
+            : e instanceof Error
+              ? `Unknown error: ${e.message}`
+              : '${e}';
       return { success: false, message };
     }
   }

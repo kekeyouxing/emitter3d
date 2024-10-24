@@ -1,3 +1,5 @@
+import { units } from './units';
+
 export type ASTVisitor<T> = {
   number(v: Number): T;
   symbol(v: Symbol): T;
@@ -19,7 +21,9 @@ export abstract class AST {
     if (v instanceof AST) return v;
     if (v instanceof Array) return new List(v.map(AST.fromPlain));
     if (typeof v == 'number') return new Number(v);
-    if (typeof v == 'string') return new Symbol(v);
+    if (typeof v == 'string') {
+      return new Symbol(v);
+    }
     throw new TypeError();
   }
 }

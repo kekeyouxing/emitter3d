@@ -5,6 +5,7 @@ import { Particles } from './particles';
 import { Prisms } from './prisms';
 import { Grid } from './grid';
 import { Camera } from './camera';
+import { skyDome } from './sky';
 
 export type Dot = {
   seed: number;
@@ -28,9 +29,8 @@ function allocateDot(): Dot {
 
 export class Scene extends THREE.Scene {
   readonly history: History<Dot>;
-  readonly prisms: Prisms;
   readonly particles: Particles;
-  readonly grid: Grid;
+  // readonly grid: Grid;
 
   readonly prismOptions = {
     saturation: 0.5,
@@ -67,12 +67,10 @@ export class Scene extends THREE.Scene {
     this.particles = new Particles(80000);
     this.add(this.particles);
 
-    this.prisms = new Prisms(80000);
-    this.add(this.prisms);
+    // this.grid = new Grid();
+    // this.add(this.grid);
 
-    this.grid = new Grid();
-    this.add(this.grid);
-
+    this.add(skyDome);
     this.particles.mat.setCameraClip(camera.near, camera.far);
   }
 
@@ -84,39 +82,7 @@ export class Scene extends THREE.Scene {
   }
 
   updateState(): void {
-    const rotation = new THREE.Quaternion();
     const hsla = new THREE.Vector4();
-    const q = new THREE.Quaternion();
-    const e = new THREE.Euler();
-
-    if (this.prisms.visible) {
-      const {
-        trailLength,
-        trailStep,
-        trailAttenuation,
-        snapshotOffset,
-        hueOffset,
-        hueTransition,
-        saturation,
-        lightness,
-      } = this.prismOptions;
-
-      const prisms = this.prisms.beginUpdateState();
-      for (let i = 0; i < trailLength; i += Math.floor(trailStep)) {
-        const t = i / (trailLength - 0.9);
-        const l = trailAttenuation(t);
-        for (const dot of this.history.snapshot(i + snapshotOffset)) {
-          if (dot.opacity == 0) continue;
-          rotation
-            .copy(dot.rotation)
-            .multiply(q.setFromEuler(e.set(0, 0, Math.PI * 0.02 * dot.lifeTime)));
-          const hue = (dot.hue + hueOffset + (hueTransition * i) / trailLength) / 360;
-          hsla.set(hue, saturation, lightness * l, dot.opacity);
-          prisms.put(dot.position, rotation, hsla);
-        }
-      }
-      prisms.complete();
-    }
 
     if (this.particles.visible) {
       const {
@@ -147,8 +113,8 @@ export class Scene extends THREE.Scene {
             dot.position,
             hsla,
             f,
-            dot.lifeTime * trailDiffusionShakiness + dot.seed * 100,
-            s
+            dot.lifeTime * trailDiffusionShakiness,
+            s,
           );
         }
       }
@@ -161,6 +127,6 @@ export class Scene extends THREE.Scene {
   }
 
   setYOffset(offset: number): void {
-    this.grid.position.set(0, offset, 0);
+    // this.grid.position.set(0, offset, 0);
   }
 }

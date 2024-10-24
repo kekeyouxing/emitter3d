@@ -10,7 +10,7 @@ export class Printer {
     close: string,
     sep: string,
     items: T[],
-    printer: (item: T) => string
+    printer: (item: T) => string,
   ): string {
     if (this.allowIndention) open = open.replace(/\s$/, '') + '\n';
     if (this.allowIndention) close = '\n' + this.indent + close.replace(/^\s/, '');
@@ -30,7 +30,7 @@ export class Printer {
     if (head) {
       if (!headIsList && itemsContainList) {
         return this.printBlock(open + this.print(head) + ' ', close, ' ', items, e =>
-          this.print(e)
+          this.print(e),
         );
       }
       items = [head, ...items];
@@ -70,7 +70,7 @@ export class Printer {
         if (this.useSyntaxSugar && callee instanceof dsl.Symbol) {
           if (callee.value == dsl.Symbol.block.value && args.every(e => e instanceof dsl.List)) {
             return this.printBlock('{ ', ' }', ' | ', args, p =>
-              this.printProgram((p as dsl.List).elements)
+              this.printProgram((p as dsl.List).elements),
             );
           } else if (callee.value == dsl.Symbol.eachChoice.value && args.length >= 1) {
             return this.printList('[', ']', args);
