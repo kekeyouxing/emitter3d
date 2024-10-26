@@ -4,10 +4,10 @@ import { StyleSheet, css } from 'aphrodite';
 import { Mount } from './components';
 import { useStats } from './effects/stats';
 import { useStore } from './effects/store';
-import { Options } from './options';
 import { Editor } from './editor';
 import { Screen } from './screen';
 import { useSystem } from './system';
+import { StartPlay } from './startplay';
 
 export const Main: FunctionalComponent<{}> = props => {
   const stats = useStats();
@@ -24,7 +24,7 @@ export const Main: FunctionalComponent<{}> = props => {
         cameraRevolve: !state.cameraRevolve,
       }));
     },
-    [update]
+    [update],
   );
 
   useSystem();
@@ -33,8 +33,9 @@ export const Main: FunctionalComponent<{}> = props => {
     <div className={css(styles.container)} onContextMenu={togglePauseAndCameraRevolve}>
       <Screen />
       <Mount className={css(styles.stats, showStats && styles.statsShow)} dom={stats.dom} />
-      <Options />
+      <StartPlay />
       <Editor />
+
     </div>
   );
 };

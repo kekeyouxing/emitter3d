@@ -2,8 +2,6 @@ import * as math from 'gl-matrix';
 // 创建一个隐藏的 canvas 用来绘制文字
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-// 设置更浪漫的字体（使用手写体）
-
 // 设置画布大小
 canvas.width = 500;
 canvas.height = 200;
@@ -16,7 +14,7 @@ function generateTextPositions(text: string): { textPositions: math.vec3[], cent
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
   const textPositions: math.vec3[] = [];
-  const particleSize = 3;
+  const particleSize = 2;
   for (let x = 0; x < canvas.width; x += particleSize) {
     for (let y = 0; y < canvas.height; y += particleSize) {
       const index = (x + y * canvas.width) * 4;

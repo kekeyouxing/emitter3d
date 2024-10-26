@@ -3,6 +3,7 @@ import { useContext, useState, useCallback } from 'preact/hooks';
 
 export interface Store {
   readonly state: ApplicationState;
+
   update(updater: Updater<ApplicationState>): void;
 }
 
@@ -19,7 +20,7 @@ export const RunStore: FunctionalComponent<{
         ...(updater instanceof Function ? updater(s) : updater),
       }));
     },
-    [setState]
+    [setState],
   );
 
   return <Context.Provider value={{ state, update }}>{props.children}</Context.Provider>;
@@ -43,6 +44,7 @@ export function initialApplicationState(): ApplicationState {
 }
 
 export type CoreState = {
+  showStartPlay: boolean, // 新增状态来控制组件显示
   isPaused: boolean;
   showStats: boolean;
   showGrid: boolean;
@@ -180,10 +182,10 @@ export function deserializeState(data: string): Partial<ApplicationState> {
 }
 
 export function compileTransition({
-  init,
-  center: l,
-  exponent,
-}: Transition): (x: number) => number {
+                                    init,
+                                    center: l,
+                                    exponent,
+                                  }: Transition): (x: number) => number {
   const tail = 1 - init;
   const r = 1 - l;
   const p = Math.exp(exponent);
@@ -194,14 +196,15 @@ export function compileTransition({
     n < init
       ? 1 - (1 - n / init) ** p
       : n < initx
-      ? l * (1 - ((n - init) / x1) ** p) + r
-      : n < 1
-      ? r * (1 - (n - initx) / x2) ** p
-      : 0;
+        ? l * (1 - ((n - init) / x1) ** p) + r
+        : n < 1
+          ? r * (1 - (n - initx) / x2) ** p
+          : 0;
 }
 
 export const initialCoreState: CoreState = {
-  isPaused: false,
+  showStartPlay: true,
+  isPaused: true,
   showStats: false,
   showGrid: true,
   stepsPerSecond: 90,

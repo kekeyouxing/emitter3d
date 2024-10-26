@@ -210,7 +210,7 @@ export class BloomVoiceBehavior extends Behavior {
   }
 
   update(field: Field, particle: Particle, start: number, end: number): number {
-    soundHandler.PlayBoom(0.1);
+    soundHandler.PlayBoom(0.3);
     return super.update(field, particle, start, end);
   }
 }
@@ -222,7 +222,7 @@ export class CrackleVoiceBehavior extends Behavior {
   }
 
   update(field: Field, particle: Particle, start: number, end: number): number {
-    soundHandler.PlayCrackle(0.1);
+    soundHandler.PlayCrackle(0.3);
     return super.update(field, particle, start, end);
   }
 }
