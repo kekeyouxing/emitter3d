@@ -2,10 +2,10 @@ import * as THREE from 'three';
 
 import { History } from './aux/history';
 import { Particles } from './particles';
-import { Prisms } from './prisms';
-import { Grid } from './grid';
+import { cylinderGeometry } from './bgparticles';
 import { Camera } from './camera';
 import { skyDome } from './sky';
+import { createMaterial } from './aux/bg-shader';
 
 export type Dot = {
   seed: number;
@@ -31,7 +31,7 @@ export class Scene extends THREE.Scene {
   readonly history: History<Dot>;
   readonly particles: Particles;
   // readonly grid: Grid;
-
+  readonly bgParticles: THREE.Points;
   readonly prismOptions = {
     saturation: 0.5,
     lightness: 0.5,
@@ -58,6 +58,10 @@ export class Scene extends THREE.Scene {
   };
 
   stateNeedsUpdate = false;
+  readonly gu = {
+    time: { value: 0 },
+  };
+  readonly clock = new THREE.Clock();
 
   constructor(camera: Camera) {
     super();
@@ -67,8 +71,9 @@ export class Scene extends THREE.Scene {
     this.particles = new Particles(80000);
     this.add(this.particles);
 
-    // this.grid = new Grid();
-    // this.add(this.grid);
+    const material = createMaterial(this.gu);
+    this.bgParticles = new THREE.Points(cylinderGeometry, material);
+    this.add(this.bgParticles);
 
     this.add(skyDome);
     this.particles.mat.setCameraClip(camera.near, camera.far);
@@ -82,6 +87,17 @@ export class Scene extends THREE.Scene {
   }
 
   updateState(): void {
+    let t = this.clock.getElapsedTime() * 0.5;
+    this.gu.time.value = t * Math.PI;
+    const bgPositions = this.bgParticles.geometry.attributes.position.array as Float32Array;
+    for (let i = 1; i < bgPositions.length; i += 3) {
+      bgPositions[i] -= 0.5; // Move particle down
+      if (bgPositions[i] < -200) { // Reset particle to top if it goes below a certain point
+        bgPositions[i] = 200;
+      }
+    }
+    this.bgParticles.geometry.attributes.position.needsUpdate = true;
+
     const hsla = new THREE.Vector4();
 
     if (this.particles.visible) {
@@ -126,7 +142,4 @@ export class Scene extends THREE.Scene {
     this.particles.mat.setSize(width, height);
   }
 
-  setYOffset(offset: number): void {
-    // this.grid.position.set(0, offset, 0);
-  }
 }

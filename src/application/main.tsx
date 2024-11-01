@@ -34,7 +34,7 @@ export const Main: FunctionalComponent<{}> = props => {
       <Screen />
       <Mount className={css(styles.stats, showStats && styles.statsShow)} dom={stats.dom} />
       <StartPlay />
-      <Editor />
+      {/*<Editor />*/}
 
     </div>
   );

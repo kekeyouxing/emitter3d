@@ -181,7 +181,7 @@ export class TextBehavior extends Behavior {
   }
 
   update(field: Field, particle: Particle, start: number, end: number): number {
-    const { textPositions, center } = generateTextPositions('I LOVE YOU');
+    const { textPositions, center } = generateTextPositions('新年快乐');
     const targetCenter = particle.position;
     const translation = math.vec3.create();
     // offset to the center
