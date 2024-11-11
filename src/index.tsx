@@ -26,7 +26,7 @@ function emitter3d(container: HTMLElement): void {
     const data = decodeURIComponent(location.hash.slice(1));
     state = { ...state, ...deserializeState(data) };
   }
-
+  
   render(
     <EntryPoint
       simulator={simulator}
@@ -35,7 +35,7 @@ function emitter3d(container: HTMLElement): void {
       explorer={explorer}
       stats={stats}
     />,
-    container
+    container,
   );
 }
 

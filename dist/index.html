@@ -12,7 +12,7 @@
     <script>
       window.addEventListener('load', function () {
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/emitter3d/service-worker.js');
+          navigator.serviceWorker.register('service-worker.js');
         }
         emitter3d(document.body);
       });

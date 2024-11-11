@@ -52,6 +52,7 @@ export type CoreState = {
   stepsPerUpdate: number;
   cameraRevolve: boolean;
   floorTransition: boolean;
+  urlParam: string;
 };
 
 export type EditorState = {
@@ -211,6 +212,7 @@ export const initialCoreState: CoreState = {
   stepsPerUpdate: 1,
   cameraRevolve: true,
   floorTransition: false,
+  urlParam: '',
 };
 
 export const initialEditorState: EditorState = {

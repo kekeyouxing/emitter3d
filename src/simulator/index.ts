@@ -78,7 +78,6 @@ export class Simulator {
   compilePattern(program: string | Program, clear: boolean): { success: boolean; message: string } {
     try {
       program = typeof program == 'string' ? parse(program) : program;
-      // 遍历program，并进行打印
       this.pattern = compile(program);
       if (clear) this.field.clear();
       return { success: true, message: 'Successfully compiled.' };
