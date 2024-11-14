@@ -1,66 +1,71 @@
 import { h, FunctionalComponent } from 'preact';
 import { useState } from 'preact/hooks';
+import { generateOrder } from './api';
 
-// 定义样式（可以使用自己的CSS或其他库）
+import { Toast } from './toast';
+
 interface FormComponentProps {
   onSubmit: (onSubmit: boolean) => void;
+  id: string | null;
 }
 
 interface FormValues {
   comments: string;
+  sentences: string[];
 }
 
-export const FormComponent: FunctionalComponent<FormComponentProps> = ({ onSubmit }) => {
-  const [values, setValues] = useState<FormValues>({ comments: '' });
-  const [errors, setErrors] = useState<FormValues>({ comments: '' });
+export const FormComponent: FunctionalComponent<FormComponentProps> = ({ onSubmit, id }) => {
+  const [values, setValues] = useState<FormValues>({ comments: '', sentences: [] });
+  const [errors, setErrors] = useState<FormValues>({ comments: '', sentences: [] });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
+    const sentences = value
+      .split(/(?<=[。！？,.，?])/)
+      .filter(Boolean)
+      .map((sentence: string) => sentence.replace(/[。！？,.，?]/g, '')); // Remove punctuation
     setValues({
       ...values,
       [name]: value,
+      sentences,
     });
   };
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    // 简单的验证逻辑
-    const newErrors: FormValues = { comments: '' };
+    const newErrors: FormValues = { comments: '', sentences: [] };
 
     if (!values.comments) {
+      setToastMessage('留言是必填项');
       newErrors.comments = '留言是必填项';
     }
 
-    if (newErrors.comments) {
-      setErrors(newErrors);
-    } else {
-      // 处理提交
-      console.log('提交数据：', values);
+    setErrors(newErrors);
+
+    if (newErrors.comments) return;
+
+    if (!id) {
+      setToastMessage('无效id');
+      return;
     }
+
+    const v = values.sentences.join(',');
+    generateOrder(id, v)
+      .then(response => {
+        if (response.code === 0) {
+          onSubmit(true);
+        } else if (response.code === 10000) {
+          setToastMessage('输入已经超过4次，无法再次编辑');
+        } else {
+          setToastMessage('提交失败，返回异常');
+        }
+      })
+      .catch(() => {
+        setToastMessage('提交失败，网络异常');
+      });
   };
 
-
-  // const handleSubmit = async (e: Event) => {
-  //   e.preventDefault();
-  //   await validateForm();
-  //
-  //   if (Object.keys(errors).length > 0) {
-  //     return;
-  //   }
-  //
-  //   setIsSubmitting(true);
-  //   try {
-  //     // await axios.post('http://192.168.10.39:8080/api/orders', formData);
-  //     alert('提交成功，请等待商家发货');
-  //     // resetForm();
-  //   } catch (error) {
-  //     console.log(error);
-  //     alert('提交失败,请联系商家');
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  //   onSubmit(true);
-  // };
 
   return (
     <div style={styles.container}>
@@ -80,10 +85,18 @@ export const FormComponent: FunctionalComponent<FormComponentProps> = ({ onSubmi
         </button>
         <div style={styles.instructions}>
           说明：<br />
-          <p>1. 自定义输入您的留言，留言将自动进行拆分，作为烟花短句。</p>
-          <p>2. 若要修改留言，请在动态视频界面双击屏幕修改，此留言仅支持修改3次。</p>
+          <p>1. 此留言仅支持<span style={{ color: 'red' }}>修改4次</span>，若要修改留言，请在特效界面三击屏幕修改。</p>
+          <p>2. 自定义输入您的留言，留言将根据标点符号自动进行拆分，作为烟花短句。</p>
         </div>
       </form>
+      <div style={styles.sentencesContainer}>
+        {values.sentences.map((sentence, index) => (
+          <div key={index} style={styles.sentence}>
+            {sentence}
+          </div>
+        ))}
+      </div>
+      {toastMessage && <Toast message={toastMessage} />}
     </div>
   );
 };
@@ -145,6 +158,13 @@ const styles = {
     instructions: {
       fontSize: '12px',
     },
+  },
+  sentencesContainer: {
+    marginTop: '20px',
+  },
+  sentence: {
+    padding: '8px',
+    borderBottom: '1px solid #ddd',
   },
   instructions: {
     marginTop: '10px',

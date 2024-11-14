@@ -8,7 +8,7 @@ import { Screen } from './screen';
 import { useSystem } from './system';
 import { StartPlay } from './startplay';
 import { FormComponent } from './form';
-import { fetchData } from './api';
+import { getTimes, fetchData } from './api';
 
 export const Main: FunctionalComponent<{}> = props => {
   const stats = useStats();
@@ -18,11 +18,12 @@ export const Main: FunctionalComponent<{}> = props => {
 
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [isValidQR, setIsValidQR] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [times, setTimes] = useState(0);
+  const [id, setId] = useState<string | null>(null);
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
+    setId(id);
     if (id) {
       fetchData(id)
         .then((data: any) => {
@@ -34,12 +35,17 @@ export const Main: FunctionalComponent<{}> = props => {
             setIsValidQR(false);
           }
         })
-        .catch((error: any) => setIsValidQR(false))
-        .finally(() => setIsLoading(false));
+        .catch((error: any) => setIsValidQR(false));
+      getTimes(id)
+        .then((data: any) => {
+          if (data.code === 0) {
+            setTimes(data.data);
+          }
+        })
+        .catch((error: any) => setTimes(0));
     } else {
       // 无效验证码
       setIsValidQR(false);
-      setIsLoading(false);
     }
 
   }, []);
@@ -62,17 +68,15 @@ export const Main: FunctionalComponent<{}> = props => {
 
   return (
     <div>
-      {isLoading ? (
-        <div></div>
-      ) : isValidQR ? (
-        isFormSubmitted ? (
+      {isValidQR ? (
+        isFormSubmitted || times >= 3 ? (
           <div className={css(styles.container)} onContextMenu={togglePauseAndCameraRevolve}>
             <Screen />
             <Mount className={css(styles.stats, showStats && styles.statsShow)} dom={stats.dom} />
             <StartPlay />
           </div>
         ) : (
-          <FormComponent onSubmit={handleFormSubmit} />
+          <FormComponent onSubmit={handleFormSubmit} id={id} />
         )
       ) : (
         <div>无效验证码</div>

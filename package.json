@@ -23,6 +23,7 @@
     "axios": "^1.7.7",
     "gl-matrix": "^3.3.0",
     "preact": "^10.5.13",
+    "react-toastify": "^10.0.6",
     "stats.js": "^0.17.0",
     "three": "^0.127.0",
     "yup": "^1.4.0"
