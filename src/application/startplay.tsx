@@ -1,20 +1,43 @@
 import { h, FunctionalComponent } from 'preact';
-import { useCallback } from 'preact/hooks';
+import { useCallback, useState } from 'preact/hooks';
 import { css, StyleSheet } from 'aphrodite';
 import { useStore } from './effects/store';
 import { SoundHandler } from './soundhandler';
+import { getComments } from './api';
+import { Toast } from './toast';
 
-export const StartPlay: FunctionalComponent = () => {
+interface FormComponentProps {
+  id: string | null;
+}
+
+export const StartPlay: FunctionalComponent<FormComponentProps> = ({ id }) => {
   const store = useStore();
   const { update, state } = store;
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   // SoundHandler
   const soundHandler = new SoundHandler();
 
+  if (!id) {
+    setToastMessage('无效id');
+    return null;
+  }
   const handleClick = useCallback(() => {
-    update(state => ({
-      isPaused: false,
-      showStartPlay: false, // 新增状态来控制组件显示
-    }));
+    getComments(id)
+      .then((response: any) => {
+        console.log(response.data);
+        if (response.code === 0) {
+          update(state => ({
+            isPaused: false,
+            comments: response.data,
+            showStartPlay: false,
+          }));
+        } else {
+          setToastMessage('获取留言失败');
+        }
+      }).catch((error: any) => {
+      setToastMessage('获取留言失败 ' + error);
+    });
+
     // PlayBackground
     soundHandler.PlayBackground(0.3);
   }, [update]);
@@ -26,6 +49,7 @@ export const StartPlay: FunctionalComponent = () => {
   return (
     <button className={css(styles.button)} onClick={handleClick}>
       <div className={css(styles.triangle)} />
+      {toastMessage && <Toast message={toastMessage} />}
     </button>
   );
 };

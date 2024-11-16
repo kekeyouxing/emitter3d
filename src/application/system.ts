@@ -295,7 +295,7 @@ export function useCodeGenerate(clear: boolean): () => void {
   const simulator = useSimulator();
 
   const update = store.update;
-  const { generatorGeneration, generatorStrength } = store.state;
+  const { generatorGeneration, generatorStrength, comments } = store.state;
 
   return useCallback(async () => {
     const code = 'hue 10\n' +
@@ -353,6 +353,7 @@ export function useCodeGenerate(clear: boolean): () => void {
       '  200 ease-out translate 50 0 0\n' +
       '}';
     simulator.compilePattern(code, true);
+    simulator.setComments(comments);
     const generation = generatorGeneration + 1;
     const item = `Generation ${generation}`;
     update(state => ({

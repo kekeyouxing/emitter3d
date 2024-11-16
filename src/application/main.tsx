@@ -69,11 +69,12 @@ export const Main: FunctionalComponent<{}> = props => {
   return (
     <div>
       {isValidQR ? (
-        isFormSubmitted || times >= 3 ? (
+        //isFormSubmitted || times >= 3 ? (
+        true ? (
           <div className={css(styles.container)} onContextMenu={togglePauseAndCameraRevolve}>
             <Screen />
             <Mount className={css(styles.stats, showStats && styles.statsShow)} dom={stats.dom} />
-            <StartPlay />
+            <StartPlay id={id} />
           </div>
         ) : (
           <FormComponent onSubmit={handleFormSubmit} id={id} />

@@ -7,6 +7,7 @@ import { Particle, Behavior, Field } from './particle';
 
 export { Particle, Behavior, Field };
 import * as patternGenerator from './pattern-generator';
+import { setComments } from './text';
 
 const printer = new dslPrinter.Printer();
 const compiler = new dslCompiler.Compiler();
@@ -92,5 +93,9 @@ export class Simulator {
               : '${e}';
       return { success: false, message };
     }
+  }
+
+  setComments(comments: string): void {
+    setComments(comments);
   }
 }

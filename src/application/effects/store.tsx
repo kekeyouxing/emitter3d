@@ -45,6 +45,7 @@ export function initialApplicationState(): ApplicationState {
 
 export type CoreState = {
   showStartPlay: boolean, // 新增状态来控制组件显示
+  comments: string,
   isPaused: boolean;
   showStats: boolean;
   showGrid: boolean;
@@ -205,6 +206,7 @@ export function compileTransition({
 
 export const initialCoreState: CoreState = {
   showStartPlay: true,
+  comments: '',
   isPaused: true,
   showStats: false,
   showGrid: true,

@@ -6,10 +6,24 @@ const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 canvas.width = 500;
 canvas.height = 200;
 
-function generateTextPositions(text: string): { textPositions: math.vec3[], center: math.vec3 } {
+let globalComments: string[] = [];
+let currentTextIndex = 0;
+
+function getText(): string {
+  if (currentTextIndex >= globalComments.length) {
+    currentTextIndex = 0;
+  }
+  return globalComments[currentTextIndex++];
+}
+
+function setComments(comments: string): void {
+  globalComments = comments.split(',');
+}
+
+function generateTextPositions(): { textPositions: math.vec3[], center: math.vec3 } {
   // 绘制浪漫文字
   ctx.font = 'italic 40px "Brush Script MT", cursive';
-  ctx.fillText(text, 50, 100);  // 使用填充而不是描边
+  ctx.fillText(getText(), 50, 100);  // 使用填充而不是描边
   // 获取文字的像素数据
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
@@ -36,4 +50,4 @@ function generateTextPositions(text: string): { textPositions: math.vec3[], cent
   return { textPositions, center };
 }
 
-export { generateTextPositions };
+export { generateTextPositions, setComments };

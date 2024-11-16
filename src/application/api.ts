@@ -33,3 +33,14 @@ export const getTimes = async (id: string) => {
     return null;
   }
 };
+
+// getComments
+export const getComments = async (id: string) => {
+  try {
+    const response = await axiosInstance.get(`/api/getComments`, { params: { id } });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return null;
+  }
+};
