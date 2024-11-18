@@ -1,4 +1,7 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require('path');
 const isProduction = process.env.NODE_ENV == 'production';
+
 
 module.exports = {
   mode: 'production',
@@ -28,4 +31,12 @@ module.exports = {
       publicPath: '/emitter3d',
     },
   },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: path.resolve(__dirname, 'src/application/config.txt'), to: path.resolve(__dirname, 'dist') },
+        { from: path.resolve(__dirname, 'src/sounds'), to: path.resolve(__dirname, 'dist/sounds') },
+      ],
+    }),
+  ],
 };
