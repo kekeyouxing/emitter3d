@@ -36,6 +36,9 @@ module.exports = {
       patterns: [
         { from: path.resolve(__dirname, 'src/application/config.txt'), to: path.resolve(__dirname, 'dist') },
         { from: path.resolve(__dirname, 'src/sounds'), to: path.resolve(__dirname, 'dist/sounds') },
+        { from: path.resolve(__dirname, 'src/index.html'), to: path.resolve(__dirname, 'dist') },
+        { from: path.resolve(__dirname, 'src/service-worker.js'), to: path.resolve(__dirname, 'dist') },
+        { from: path.resolve(__dirname, 'src/emitter3d.webmanifest'), to: path.resolve(__dirname, 'dist') },
       ],
     }),
   ],
