@@ -1,6 +1,6 @@
-import { useEffect, useCallback, useRef } from 'preact/hooks';
+import { useCallback, useEffect, useRef } from 'preact/hooks';
 import { useAnimationFrame } from './hooks';
-import { useStore, compileTransition } from './effects/store';
+import { compileTransition, useStore } from './effects/store';
 import { useStats } from './effects/stats';
 import { useExplorer } from './effects/explorer';
 import { useSimulator } from './effects/simulator';
@@ -8,9 +8,8 @@ import { useViewer } from './effects/viewer';
 import { copyParticle } from '../bridge';
 
 export function useSystem(): void {
-  // 加载数据库
-  //loadDbAndGetUserConfig();
   useExplorerInitialization();
+  useCompileRequestHandler();
   useViewerOptionApplier();
   useAnimationFrame(useSystemUpdater());
 }
@@ -33,6 +32,41 @@ function useExplorerInitialization(): void {
       update({ explorer: state });
     })();
   }, []);
+}
+
+function useCompileRequestHandler(): void {
+  const store = useStore();
+  const simulator = useSimulator();
+  const compileTimeout = useRef(0);
+
+  const update = store.update;
+
+  const { editingCode, editorCompilation } = store.state;
+
+  const commit = useCallback(
+    (code: string) => {
+      const { message } = simulator.compilePattern(code, true);
+      update({ editorNotification: message });
+    },
+    [update, simulator],
+  );
+
+  useEffect(() => {
+    switch (editorCompilation[0]) {
+      case 'none':
+        break;
+      case 'required':
+        const defer = editorCompilation[1];
+        update({ editorCompilation: ['none'], editorNotification: '...' });
+        clearTimeout(compileTimeout.current);
+        compileTimeout.current = window.setTimeout(commit.bind(null, editingCode), defer);
+        break;
+      case 'cancelRequired':
+        update({ editorCompilation: ['none'] });
+        clearTimeout(compileTimeout.current);
+        break;
+    }
+  }, [update, editingCode, editorCompilation]);
 }
 
 function useViewerOptionApplier(): void {
@@ -288,6 +322,34 @@ export function useCodeLoad(): (path: string, item: string) => void {
   );
 }
 
+let configContent: string | null = null;
+
+function loadConfigFile(): string {
+  if (configContent === null) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', 'config.txt', false); // Synchronous request
+    xhr.send(null);
+
+    if (xhr.status === 200) {
+      configContent = xhr.responseText;
+    } else {
+      throw new Error('Failed to load config file');
+    }
+  }
+  return configContent;
+}
+
+// Usage
+function generateCode(): string {
+  try {
+    const configFileContent = loadConfigFile();
+    console.log(configFileContent);
+    return configFileContent;
+  } catch (error) {
+    console.error('Error loading config file:', error);
+    return '';
+  }
+}
 
 export function useCodeGenerate(clear: boolean): () => void {
   const store = useStore();
@@ -296,64 +358,15 @@ export function useCodeGenerate(clear: boolean): () => void {
 
   const update = store.update;
   const { generatorGeneration, generatorStrength, comments } = store.state;
-
+  if (!comments) {
+    return () => {
+    };
+  }
   return useCallback(async () => {
-    const code = 'hue 10\n' +
-      'speed 0\n' +
-      '\n' +
-      '120 emit 1 8 1 {\n' +
-      '  rotate [-150 .. -30] 0 0\n' +
-      '  speed 1\n' +
-      '  88 ease-in speed 0.2\n' +
-      '  60 nop\n' +
-      '  30 opacity 0\n' +
-      '  fireworks 50 {\n' +
-      '    opacity 0.7\n' +
-      '    180 ease-out fireworksExplode 40\n' +
-      '  }\n' +
-      '  bloomVoice {}\n' +
-      '}\n' +
-      'text 0 50 0 {\n' +
-      '  200 ease-out translate 50 0 0\n' +
-      '  crackleVoice {}\n' +
-      '  250 textExplode 40\n' +
-      '}\n' +
-      '\n' +
-      '240 nop\n' +
-      'emit 4 1 1 {\n' +
-      '  translate 0 0 [-40..40]\n' +
-      '  rotate [-90] 0 0\n' +
-      '  [40..200] nop\n' +
-      '  speed 2\n' +
-      '  120 ease-out speed 0\n' +
-      '  32 emit 4 32 1 {\n' +
-      '  opacity 0.7\n' +
-      '  speed 1.5\n' +
-      '  rotate <> <> <>\n' +
-      '  120 ease-out speed 0\n' +
-      '  }\n' +
-      '}\n' +
-      '420 nop\n' +
-      '240 emit 1 10 1 {\n' +
-      '  rotate 0 [] 0\n' +
-      '  {\n' +
-      '    speed 0.5\n' +
-      '    240 nop\n' +
-      '    |\n' +
-      '    10 ease-out rotate 21 60 129\n' +
-      '  }\n' +
-      '  32 emit 4 32 1 {\n' +
-      '  opacity 0.7\n' +
-      '  speed 1.5\n' +
-      '  rotate <> <> <>\n' +
-      '  120 ease-out speed 0\n' +
-      '  }\n' +
-      '}\n' +
-      'text 0 100 0 {\n' +
-      '  200 ease-out translate 50 0 0\n' +
-      '}';
+    const code = generateCode();
     simulator.compilePattern(code, true);
     simulator.setComments(comments);
+
     const generation = generatorGeneration + 1;
     const item = `Generation ${generation}`;
     update(state => ({

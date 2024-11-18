@@ -9,6 +9,7 @@ import { useSystem } from './system';
 import { StartPlay } from './startplay';
 import { FormComponent } from './form';
 import { getTimes, fetchData } from './api';
+import { Editor } from './editor';
 
 export const Main: FunctionalComponent<{}> = props => {
   const stats = useStats();
@@ -69,8 +70,7 @@ export const Main: FunctionalComponent<{}> = props => {
   return (
     <div>
       {isValidQR ? (
-        //isFormSubmitted || times >= 3 ? (
-        true ? (
+        isFormSubmitted || times >= 3 ? (
           <div className={css(styles.container)} onContextMenu={togglePauseAndCameraRevolve}>
             <Screen />
             <Mount className={css(styles.stats, showStats && styles.statsShow)} dom={stats.dom} />

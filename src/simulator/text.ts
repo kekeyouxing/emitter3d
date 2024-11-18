@@ -21,7 +21,7 @@ function setComments(comments: string): void {
 }
 
 function generateTextPositions(): { textPositions: math.vec3[], center: math.vec3 } {
-  // 绘制浪漫文字
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.font = 'italic 40px "Brush Script MT", cursive';
   ctx.fillText(getText(), 50, 100);  // 使用填充而不是描边
   // 获取文字的像素数据

@@ -24,7 +24,6 @@ export const StartPlay: FunctionalComponent<FormComponentProps> = ({ id }) => {
   const handleClick = useCallback(() => {
     getComments(id)
       .then((response: any) => {
-        console.log(response.data);
         if (response.code === 0) {
           update(state => ({
             isPaused: false,
@@ -38,7 +37,7 @@ export const StartPlay: FunctionalComponent<FormComponentProps> = ({ id }) => {
       setToastMessage('获取留言失败 ' + error);
     });
 
-    // PlayBackground
+    // play Background
     soundHandler.PlayBackground(0.3);
   }, [update]);
 
