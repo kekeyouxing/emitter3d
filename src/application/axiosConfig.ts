@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://lightline.space:8080', // Replace with your backend IP and port
+  baseURL: 'https://www.lightline.space', // Replace with your backend IP and port
   withCredentials: false, // Include credentials for cross-origin requests if needed
 });
 
