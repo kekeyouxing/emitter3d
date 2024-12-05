@@ -39,6 +39,7 @@ module.exports = {
         { from: path.resolve(__dirname, 'src/index.html'), to: path.resolve(__dirname, 'dist') },
         { from: path.resolve(__dirname, 'src/service-worker.js'), to: path.resolve(__dirname, 'dist') },
         { from: path.resolve(__dirname, 'src/emitter3d.webmanifest'), to: path.resolve(__dirname, 'dist') },
+        { from: path.resolve(__dirname, 'src/MP_verify_Ll02dPnzlUCgux4I'), to: path.resolve(__dirname, 'dist') },
       ],
     }),
   ],
